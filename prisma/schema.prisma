@@ -1,0 +1,81 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Map {
+  id         String      @id @default(cuid())
+  name       String      @unique
+  imageUrl   String
+  characters Character[]
+
+  @@index([name])
+  @@map("maps")
+}
+
+model Character {
+  id   String @id @default(cuid())
+  name String
+
+  // normalized coordinates (0-1)
+  xMin Float
+  xMax Float
+  yMin Float
+  yMax Float
+
+  imageUrl        String
+  map             Map              @relation(fields: [mapId], references: [id], onDelete: Cascade)
+  mapId           String
+  foundCharacters FoundCharacter[]
+
+  @@unique([name, mapId])
+  @@index([name, mapId])
+  @@map("characters")
+}
+
+model GameSession {
+  id          String    @id @default(cuid())
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+  score       Score?
+
+  found FoundCharacter[]
+
+  @@index([id])
+  @@map("game_sessions")
+}
+
+model FoundCharacter {
+  id String @id @default(cuid())
+
+  session   GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId String
+
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  characterId String
+
+  @@unique([characterId, sessionId])
+  @@index([characterId, sessionId])
+  @@map("found_characters")
+}
+
+model Score {
+  id       String @id @default(cuid())
+  username String
+
+  timeMs Int
+
+  session   GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId String      @unique
+
+  @@map("scores")
+}
