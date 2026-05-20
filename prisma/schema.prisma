@@ -15,7 +15,7 @@ datasource db {
 model Map {
   id          String      @id @default(cuid())
   name        String      @unique
-  description String      @default("")
+  description String     
   imageUrl    String
   characters  Character[]
 
