@@ -24,8 +24,10 @@ async function main() {
 }
 
 main()
-    .catch((err) => {
-        console.error(err);
-    }).finally(async () => {
+    .then(async () => {
+        await prisma.$disconnect();
+    })
+    .catch(async (e) => {
+        console.error(e);
         await prisma.$disconnect();
     });
