@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 
 // routers
-import { gameRouter } from "./routers/gameRouter.js";
+import { gameRouter } from "./routers/gameRouter";
 
 const app = express();
 
@@ -22,7 +22,7 @@ app.use(express.urlencoded({ extended: false }));
 
 // routes
 app.get("/api", (req, res) => res.json({ message: "Welcome to the API." }));
-app.get("/api/game", gameRouter);
+app.use("/api/game", gameRouter);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on Port ${PORT}!`));
