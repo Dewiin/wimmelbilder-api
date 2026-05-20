@@ -13,10 +13,11 @@ datasource db {
 }
 
 model Map {
-  id         String      @id @default(cuid())
-  name       String      @unique
-  imageUrl   String
-  characters Character[]
+  id          String      @id @default(cuid())
+  name        String      @unique
+  description String      @default("")
+  imageUrl    String
+  characters  Character[]
 
   @@index([name])
   @@map("maps")

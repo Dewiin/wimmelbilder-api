@@ -10,7 +10,7 @@ async function getMaps(req: Request, res: Response) {
         return res.status(200).json({
             message: "Successfully fetched maps!",
             maps
-        })
+        });
     } catch(err: any) {
         console.error("Error in getMaps: ", err);
         return res.status(500).json({
