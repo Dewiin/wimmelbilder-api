@@ -1,11 +1,15 @@
 import { Request, Response } from "express";
 import { prisma } from "../config/prismaClient";
 
+type SubmissionParams = {
+    mapName: string;
+};
+
 async function getMaps(req: Request, res: Response) {
     try {
         const maps = await prisma.map.findMany();
 
-        if(!maps) return res.status(404).json({ error: "No maps." });
+        if(!maps) return res.status(404).json({ error: "No maps available!" });
 
         return res.status(200).json({
             message: "Successfully fetched maps!",
@@ -19,9 +23,31 @@ async function getMaps(req: Request, res: Response) {
     }
 }
 
-type SubmissionParams = {
-    mapName: string;
-};
+
+async function getMapByName(req: Request<SubmissionParams>, res: Response) {
+    try {
+        const { mapName } = req.params;
+
+        const map = await prisma.map.findUnique({
+            where: {
+                name: mapName,
+            }
+        });
+
+        if(!map) return res.status(404).json({ error: "Map does not exist!" });
+
+        return res.status(200).json({
+            message: "Map found successfully!",
+            map
+        });
+    } catch(err: any) {
+        console.error("Error in getMapByName: ", err);
+        return res.status(500).json({
+            error: "Server error fetching map."
+        });
+    }
+}
+
 async function postSubmission(req: Request<SubmissionParams>, res: Response) {
     try {
         const { mapName } = req.params;
@@ -32,7 +58,7 @@ async function postSubmission(req: Request<SubmissionParams>, res: Response) {
             }
         });
 
-        if(!map) return res.status(404).json({ error: "Map does not exist." });
+        if(!map) return res.status(404).json({ error: "Map does not exist!" });
         
         return res.status(200).json({
             message: "Placeholder"
@@ -47,5 +73,6 @@ async function postSubmission(req: Request<SubmissionParams>, res: Response) {
 
 export const gameController = {
     getMaps,
+    getMapByName,
     postSubmission,
 }
