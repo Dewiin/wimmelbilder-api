@@ -24,7 +24,7 @@ async function getMaps(req: Request, res: Response) {
 }
 
 
-async function getMapByName(req: Request<SubmissionParams>, res: Response) {
+async function getMapAndCharacters(req: Request<SubmissionParams>, res: Response) {
     try {
         const { mapName } = req.params;
 
@@ -33,12 +33,20 @@ async function getMapByName(req: Request<SubmissionParams>, res: Response) {
                 name: mapName,
             }
         });
-
         if(!map) return res.status(404).json({ error: "Map does not exist!" });
+
+        const characters = await prisma.character.findMany({
+            where: {
+                mapId: map.id
+            },
+            take: 3
+        });
+        if(!characters) return res.status(404).json({ error: "No characters found!" })
 
         return res.status(200).json({
             message: "Map found successfully!",
-            map
+            map,
+            characters
         });
     } catch(err: any) {
         console.error("Error in getMapByName: ", err);
@@ -73,6 +81,6 @@ async function postSubmission(req: Request<SubmissionParams>, res: Response) {
 
 export const gameController = {
     getMaps,
-    getMapByName,
+    getMapAndCharacters,
     postSubmission,
 }
