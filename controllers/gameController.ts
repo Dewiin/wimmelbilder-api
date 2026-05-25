@@ -104,7 +104,7 @@ async function postSubmission(req: Request<SubmissionParams>, res: Response) {
             return res.status(200).json({ message: `Successfully found ${clientCharacter.name}!` });
         }
         
-        return res.status(400).json({ error: "Not quite! Try again." });
+        return res.status(400).json({ error: `That's not ${clientCharacter.name}! Try again.` });
     } catch(err: any) {
         console.error("Error in postSubmission: ", err);
         return res.status(500).json({
