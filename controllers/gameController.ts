@@ -5,6 +5,12 @@ type SubmissionParams = {
     mapName: string;
 };
 
+type Character = {
+    id: string,
+    name: string,
+    imageUrl: string,
+}
+
 async function getMaps(req: Request, res: Response) {
     try {
         const maps = await prisma.map.findMany();
@@ -39,6 +45,11 @@ async function getMapAndCharacters(req: Request<SubmissionParams>, res: Response
             where: {
                 mapId: map.id
             },
+            select: {
+                id: true,
+                name: true,
+                imageUrl: true
+            },
             take: 3
         });
         if(!characters) return res.status(404).json({ error: "No characters found!" })
@@ -59,18 +70,41 @@ async function getMapAndCharacters(req: Request<SubmissionParams>, res: Response
 async function postSubmission(req: Request<SubmissionParams>, res: Response) {
     try {
         const { mapName } = req.params;
+        const { 
+            clientCharacter, 
+            xCoord, 
+            yCoord
+        }: {
+            clientCharacter: Character,
+            xCoord: number,
+            yCoord: number
+        } = req.body
         
         const map = await prisma.map.findUnique({
             where: {
                 name: mapName,
             }
         });
-
         if(!map) return res.status(404).json({ error: "Map does not exist!" });
-        
-        return res.status(200).json({
-            message: "Placeholder"
+
+        const character = await prisma.character.findFirst({
+            where: {
+                id: clientCharacter.id,
+                mapId: map.id
+            }
         });
+        if(!character) return res.status(404).json({ error: "Character does not exist!" });
+
+        if(
+            xCoord >= character.xMin &&
+            xCoord <= character.xMax && 
+            yCoord >= character.yMin &&
+            yCoord <= character.yMax
+        ) {
+            return res.status(200).json({ message: `Successfully found ${clientCharacter.name}!` });
+        }
+        
+        return res.status(400).json({ error: "Not quite! Try again." });
     } catch(err: any) {
         console.error("Error in postSubmission: ", err);
         return res.status(500).json({

@@ -19,6 +19,7 @@ app.use(cors({
     }
 }))
 app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
 
 // routes
 app.get("/api", (req, res) => res.json({ message: "Welcome to the API." }));
