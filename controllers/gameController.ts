@@ -101,10 +101,10 @@ async function postSubmission(req: Request<SubmissionParams>, res: Response) {
             yCoord >= character.yMin &&
             yCoord <= character.yMax
         ) {
-            return res.status(200).json({ message: `Successfully found ${clientCharacter.name}!` });
+            return res.status(200).json({ status: "success", message: `Successfully found ${clientCharacter.name}!` });
         }
         
-        return res.status(400).json({ error: `That's not ${clientCharacter.name}! Try again.` });
+        return res.status(200).json({ status: "error", message: `That's not ${clientCharacter.name}! Try again.` });
     } catch(err: any) {
         console.error("Error in postSubmission: ", err);
         return res.status(500).json({
