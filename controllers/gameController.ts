@@ -90,12 +90,12 @@ async function postSubmission(req: Request<SubmissionParams>, res: Response) {
         
         const found = await prisma.foundCharacter.findFirst({
             where: {
-                characterId: clientCharacter.id,
+                characterId: character.id,
                 sessionId,
             },
             include: { character: true }
         });
-        if(found) return res.status(200).json({ status: "error", error: `${found.character.name} has already been found!` });
+        if(found) return res.status(200).json({ status: "error", error: `${character.name} has already been found!` });
 
         if(
             xCoord < character.xMin ||
