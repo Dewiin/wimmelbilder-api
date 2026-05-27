@@ -11,6 +11,8 @@ type Character = {
     imageUrl: string,
 }
 
+const WIN_COUNT = 3
+
 async function getMaps(req: Request, res: Response) {
     try {
         const maps = await prisma.map.findMany();
@@ -65,10 +67,12 @@ async function postSubmission(req: Request<SubmissionParams>, res: Response) {
         const { mapName } = req.params;
         const { 
             clientCharacter, 
+            sessionId,
             xCoord, 
             yCoord
         }: {
             clientCharacter: Character,
+            sessionId: string,
             xCoord: number,
             yCoord: number
         } = req.body
@@ -76,24 +80,46 @@ async function postSubmission(req: Request<SubmissionParams>, res: Response) {
         const map = await prisma.map.findUnique({ where: { name: mapName }});
         if(!map) return res.status(404).json({ error: "Map does not exist!" });
 
-        const character = await prisma.character.findFirst({
-            where: {
+        const character = await prisma.character.findFirst({ 
+            where: { 
                 id: clientCharacter.id,
-                mapId: map.id
-            }
+                mapId: map.id 
+            } 
         });
-        if(!character) return res.status(404).json({ error: "Character does not exist!" });
+        if(!character) return res.status(404).json({ status: "error", error: "Character does not exist!" });
+        
+        const found = await prisma.foundCharacter.findFirst({
+            where: {
+                characterId: clientCharacter.id,
+                sessionId,
+            },
+            include: { character: true }
+        });
+        if(found) return res.status(200).json({ status: "error", error: `${found.character.name} has already been found!` });
 
         if(
-            xCoord >= character.xMin &&
-            xCoord <= character.xMax && 
-            yCoord >= character.yMin &&
-            yCoord <= character.yMax
+            xCoord < character.xMin ||
+            xCoord > character.xMax || 
+            yCoord < character.yMin ||
+            yCoord > character.yMax
         ) {
-            return res.status(200).json({ status: "success", message: `Successfully found ${clientCharacter.name}!` });
+            return res.status(200).json({ status: "error", message: `That's not ${character.name}! Try again.` });
         }
         
-        return res.status(200).json({ status: "error", message: `That's not ${clientCharacter.name}! Try again.` });
+        await prisma.foundCharacter.create({
+            data: {
+                sessionId,
+                characterId: character.id
+            }
+        }); 
+        const foundCount = await prisma.foundCharacter.count({
+            where: { sessionId }
+        });
+        return res.status(200).json({ 
+            status: "success", 
+            message: `Successfully found ${character.name}!`,
+            completed: foundCount === WIN_COUNT
+        });
     } catch(err: any) {
         console.error("Error in postSubmission: ", err);
         return res.status(500).json({
