@@ -34,23 +34,16 @@ async function getMapAndCharacters(req: Request<SubmissionParams>, res: Response
     try {
         const { mapName } = req.params;
 
-        const map = await prisma.map.findUnique({
-            where: {
-                name: mapName,
-            }
-        });
+        const map = await prisma.map.findUnique({ where: { name: mapName } });
         if(!map) return res.status(404).json({ error: "Map does not exist!" });
 
         const characters = await prisma.character.findMany({
-            where: {
-                mapId: map.id
-            },
+            where: { mapId: map.id },
             select: {
                 id: true,
                 name: true,
                 imageUrl: true
-            },
-            take: 3
+            }
         });
         if(!characters) return res.status(404).json({ error: "No characters found!" })
 
@@ -80,11 +73,7 @@ async function postSubmission(req: Request<SubmissionParams>, res: Response) {
             yCoord: number
         } = req.body
         
-        const map = await prisma.map.findUnique({
-            where: {
-                name: mapName,
-            }
-        });
+        const map = await prisma.map.findUnique({ where: { name: mapName }});
         if(!map) return res.status(404).json({ error: "Map does not exist!" });
 
         const character = await prisma.character.findFirst({
@@ -113,8 +102,67 @@ async function postSubmission(req: Request<SubmissionParams>, res: Response) {
     }
 } 
 
+async function startGameSession(req: Request, res: Response) {
+    try {
+        const gameSession = await prisma.gameSession.create({});
+
+        return res.status(200).json({
+            message: "Game session created!",
+            gameSession,
+        });
+    } catch(err: any) {
+        console.error("Error in startGameSession: ", err);
+        return res.status(500).json({
+            error: "Server error starting game session."
+        });
+    }
+}
+
+async function endGameSession(req: Request, res: Response) {
+    try {
+        const { sessionId, username } = req.body;
+        const completedAt = new Date();
+        
+        const gameSession = await prisma.gameSession.findUnique({ where: { id: sessionId }, });
+        if(!gameSession) return res.status(404).json({ error: "Game session does not exist!" });
+        if(gameSession.completedAt) return res.status(400).json({ error: "Game session has already ended!" })
+        
+        const diffInMs = completedAt.getTime() - gameSession.createdAt.getTime();
+        const cleanUsername = username.trim();
+        if (!cleanUsername) return res.status(400).json({ error: "Username required!" });
+
+        const updatedSession = await prisma.$transaction(async (tx) => {
+            await tx.score.create({
+                data: {
+                    username: cleanUsername,
+                    timeMs: diffInMs,
+                    sessionId: sessionId
+                }
+            });
+
+            return await tx.gameSession.update({
+                where: { id: sessionId },
+                data: { completedAt },
+                include: { score: true }
+            });
+        });
+
+        return res.status(200).json({
+            message: "Game session completed!",
+            updatedSession,
+        });
+    } catch(err: any) {
+        console.error("Error in endGameSession: ", err);
+        return res.status(500).json({
+            error: "Server error ending game session."
+        });
+    }
+}
+
 export const gameController = {
     getMaps,
     getMapAndCharacters,
     postSubmission,
+    startGameSession,
+    endGameSession
 }
