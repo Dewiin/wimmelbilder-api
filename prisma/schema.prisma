@@ -18,6 +18,7 @@ model Map {
   description String     
   imageUrl    String
   characters  Character[]
+  scores      Score[]
 
   @@index([name])
   @@map("maps")
@@ -77,6 +78,8 @@ model Score {
 
   session   GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   sessionId String      @unique
+  map       Map         @relation(fields: [mapName], references: [name], onDelete: Cascade)
+  mapName   String      
 
   @@map("scores")
 }

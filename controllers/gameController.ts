@@ -31,6 +31,22 @@ async function getMaps(req: Request, res: Response) {
     }
 }
 
+async function getLeaderboard(req: Request<SubmissionParams>, res: Response) {
+    try {
+        const { mapName } = req.params;
+        
+        const map = await prisma.map.findUnique({ where: { name: mapName } });
+        if(!map) return res.status(404).json({ error: "Map does not exist!" });
+
+
+
+    } catch(err: any) {
+        console.error("Error in getLeaderboard: ", err);
+        return res.status(500).json({
+            error: "Server error fetching leaderboard."
+        });
+    }
+}
 
 async function getMapAndCharacters(req: Request<SubmissionParams>, res: Response) {
     try {
@@ -170,8 +186,9 @@ async function endGameSession(req: Request, res: Response) {
     }
 }
 
-async function submitScore(req: Request, res: Response) {
+async function submitScore(req: Request<SubmissionParams>, res: Response) {
     try {
+        const { mapName } = req.params;
         const { sessionId, username } = req.body;
         
         const gameSession = await prisma.gameSession.findUnique({ 
@@ -191,6 +208,7 @@ async function submitScore(req: Request, res: Response) {
                 username,
                 timeMs: diffInMs,
                 sessionId,
+                mapName,
             }
         });
 
@@ -205,6 +223,7 @@ async function submitScore(req: Request, res: Response) {
 
 export const gameController = {
     getMaps,
+    getLeaderboard,
     getMapAndCharacters,
     postSubmission,
     startGameSession,
