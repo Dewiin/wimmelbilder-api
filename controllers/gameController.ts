@@ -11,8 +11,6 @@ type Character = {
     imageUrl: string,
 }
 
-const WIN_COUNT = 3
-
 async function getMaps(req: Request, res: Response) {
     try {
         const maps = await prisma.map.findMany();
@@ -38,8 +36,16 @@ async function getLeaderboard(req: Request<SubmissionParams>, res: Response) {
         const map = await prisma.map.findUnique({ where: { name: mapName } });
         if(!map) return res.status(404).json({ error: "Map does not exist!" });
 
+        const leaderboard = await prisma.score.findMany({
+            where: { mapName },
+            orderBy: { timeMs: "asc" }
+        });
 
-
+        return res.status(200).json({
+            status: "success",
+            message: "Successfully retrieved leaderboard!",
+            leaderboard
+        });
     } catch(err: any) {
         console.error("Error in getLeaderboard: ", err);
         return res.status(500).json({
@@ -128,13 +134,15 @@ async function postSubmission(req: Request<SubmissionParams>, res: Response) {
                 characterId: character.id
             }
         }); 
+
+        const totalCount = await prisma.character.count({});
         const foundCount = await prisma.foundCharacter.count({
             where: { sessionId }
         });
         return res.status(200).json({ 
             status: "success", 
             message: `Successfully found ${character.name}!`,
-            completed: foundCount >= WIN_COUNT
+            completed: foundCount >= totalCount
         });
     } catch(err: any) {
         console.error("Error in postSubmission: ", err);
