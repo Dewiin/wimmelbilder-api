@@ -118,7 +118,7 @@ async function postSubmission(req: Request<SubmissionParams>, res: Response) {
         return res.status(200).json({ 
             status: "success", 
             message: `Successfully found ${character.name}!`,
-            completed: foundCount === WIN_COUNT
+            completed: foundCount >= WIN_COUNT
         });
     } catch(err: any) {
         console.error("Error in postSubmission: ", err);
@@ -146,31 +146,16 @@ async function startGameSession(req: Request, res: Response) {
 
 async function endGameSession(req: Request, res: Response) {
     try {
-        const { sessionId, username } = req.body;
+        const { sessionId } = req.body;
         const completedAt = new Date();
         
-        const gameSession = await prisma.gameSession.findUnique({ where: { id: sessionId }, });
+        const gameSession = await prisma.gameSession.findUnique({ where: { id: sessionId } });
         if(!gameSession) return res.status(404).json({ error: "Game session does not exist!" });
         if(gameSession.completedAt) return res.status(400).json({ error: "Game session has already ended!" })
         
-        const diffInMs = completedAt.getTime() - gameSession.createdAt.getTime();
-        const cleanUsername = username.trim();
-        if (!cleanUsername) return res.status(400).json({ error: "Username required!" });
-
-        const updatedSession = await prisma.$transaction(async (tx) => {
-            await tx.score.create({
-                data: {
-                    username: cleanUsername,
-                    timeMs: diffInMs,
-                    sessionId: sessionId
-                }
-            });
-
-            return await tx.gameSession.update({
-                where: { id: sessionId },
-                data: { completedAt },
-                include: { score: true }
-            });
+        const updatedSession = await prisma.gameSession.update({
+            where: { id: sessionId },
+            data: { completedAt },
         });
 
         return res.status(200).json({
@@ -185,10 +170,44 @@ async function endGameSession(req: Request, res: Response) {
     }
 }
 
+async function submitScore(req: Request, res: Response) {
+    try {
+        const { sessionId, username } = req.body;
+        
+        const gameSession = await prisma.gameSession.findUnique({ 
+            where: { id: sessionId },
+            include: { score: true }
+        });
+        if(!gameSession) return res.status(404).json({ error: "Game session does not exist!" });
+        if(!gameSession.completedAt) return res.status(400).json({ error: "Game session has not completed!" });
+        if(gameSession.score) return res.status(400).json({ error: "Game session already has a score!" });
+        
+        const cleanUsername = username.trim();
+        if(!cleanUsername) return res.status(400).json({ error: "Username required!" });
+        
+        const diffInMs = gameSession.completedAt.getTime() - gameSession.createdAt.getTime();
+        await prisma.score.create({
+            data: {
+                username,
+                timeMs: diffInMs,
+                sessionId,
+            }
+        });
+
+        return res.status(200).json({ status: "success", message: `${cleanUsername}'s score has been added!` })
+    } catch(err: any) {
+        console.error("Error in submitScore: ", err);
+        return res.status(500).json({
+            error: "Server submitting user score."
+        });
+    }
+}
+
 export const gameController = {
     getMaps,
     getMapAndCharacters,
     postSubmission,
     startGameSession,
-    endGameSession
+    endGameSession,
+    submitScore
 }
