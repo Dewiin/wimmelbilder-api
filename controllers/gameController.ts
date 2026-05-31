@@ -5,6 +5,10 @@ type SubmissionParams = {
     mapName: string;
 };
 
+type SessionParams = {
+    sessionId: string,
+}
+
 type Character = {
     id: string,
     name: string,
@@ -168,9 +172,9 @@ async function startGameSession(req: Request, res: Response) {
     }
 }
 
-async function endGameSession(req: Request, res: Response) {
+async function endGameSession(req: Request<SessionParams>, res: Response) {
     try {
-        const { sessionId } = req.body;
+        const { sessionId } = req.params;
         const completedAt = new Date();
         
         const gameSession = await prisma.gameSession.findUnique({ where: { id: sessionId } });
@@ -190,6 +194,29 @@ async function endGameSession(req: Request, res: Response) {
         console.error("Error in endGameSession: ", err);
         return res.status(500).json({
             error: "Server error ending game session."
+        });
+    }
+}
+
+async function getSession(req: Request<SessionParams>, res: Response) {
+    try {
+        const { sessionId } = req.params;
+
+        const gameSession = await prisma.gameSession.findUnique({
+            where: { id: sessionId },
+            include: { found: true }
+        });
+        if(!gameSession) return res.status(404).json({ error: "Game session does not exist!" });
+
+        return res.status(200).json({
+            status: "success",
+            message: "Successfully fetched session.",
+            gameSession
+        });
+    } catch(err: any) {
+        console.error("Error in getSession: ", err);
+        return res.status(500).json({
+            error: "Server error fetching game session details."
         });
     }
 }
@@ -224,7 +251,7 @@ async function submitScore(req: Request<SubmissionParams>, res: Response) {
     } catch(err: any) {
         console.error("Error in submitScore: ", err);
         return res.status(500).json({
-            error: "Server submitting user score."
+            error: "Server error submitting user score."
         });
     }
 }
@@ -236,5 +263,6 @@ export const gameController = {
     postSubmission,
     startGameSession,
     endGameSession,
+    getSession,
     submitScore
 }
