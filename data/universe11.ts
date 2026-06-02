@@ -72,6 +72,15 @@ export const universe11Characters = [
         mapId: "cmpdhl6ae0002k8f3n38hctt2"
     },
     {
+        name: "Butthead",
+        xMin: 0.60,
+        xMax: 0.62,
+        yMin: 0.71,
+        yMax: 0.75,
+        imageUrl: "/characters/sanic.png",
+        mapId: "cmpdhl6ae0002k8f3n38hctt2"
+    },
+    {
         name: "Saitama",
         xMin: 0.32,
         xMax: 0.38,
