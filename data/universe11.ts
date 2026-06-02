@@ -77,7 +77,7 @@ export const universe11Characters = [
         xMax: 0.62,
         yMin: 0.71,
         yMax: 0.75,
-        imageUrl: "/characters/sanic.png",
+        imageUrl: "/characters/butthead.png",
         mapId: "cmpdhl6ae0002k8f3n38hctt2"
     },
     {
