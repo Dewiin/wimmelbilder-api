@@ -139,7 +139,9 @@ async function postSubmission(req: Request<SubmissionParams>, res: Response) {
             }
         }); 
 
-        const totalCount = await prisma.character.count({});
+        const totalCount = await prisma.character.count({
+            where: { mapId: map.id }
+        });
         const foundCount = await prisma.foundCharacter.count({
             where: { sessionId }
         });
