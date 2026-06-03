@@ -2,6 +2,7 @@ import { prisma } from "../config/prismaClient";
 import { maps } from "../data/maps";
 import { spaceconCharacters } from "../data/spacecon";
 import { universe11Characters } from "../data/universe11";
+import { undrctyCharacters } from "../data/undrcty";
 
 async function main() {
     await prisma.map.createMany({
@@ -21,6 +22,11 @@ async function main() {
       skipDuplicates: true,
     });
 
+    // undrcty
+    await prisma.character.createMany({
+        data: undrctyCharacters,
+        skipDuplicates: true,
+    });
 }
 
 main()

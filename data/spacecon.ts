@@ -88,5 +88,5 @@ export const spaceconCharacters = [
     yMax: 0.74,
     imageUrl: "/characters/seiko_ayase.png",
     mapId: "cmpdhl6ae0000k8f3hphqa4nb"
-  },
+  }
 ]

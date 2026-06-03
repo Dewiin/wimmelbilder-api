@@ -88,5 +88,5 @@ export const universe11Characters = [
         yMax: 0.63,
         imageUrl: "/characters/saitama.png",
         mapId: "cmpdhl6ae0002k8f3n38hctt2"
-    },
+    }
 ]
